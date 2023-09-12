@@ -18,7 +18,6 @@ app.UseAuthorization();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-
 app.MapGet("/login", async (HttpContext context) =>
 {
     var user = context.User.Identity;
@@ -68,6 +67,8 @@ app.MapGet("/logout", async (HttpContext context) =>
 app.MapGet("/product-composition", () => "product-composition");
 
 app.MapGet("/manage-product-composition", [Authorize] () => "manage-product-composition");
+
+app.MapGet("/users", async (ERPContext eRPContext) => await eRPContext.Users.ToListAsync());
 
 app.MapGet("/admin-panel", [Authorize] async (HttpContext context) =>
 {
