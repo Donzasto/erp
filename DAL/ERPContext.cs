@@ -4,12 +4,15 @@ public class ERPContext : DbContext
 {
     public DbSet<User> Users { get; set; } = null!;
 
-    public ERPContext()
+    public ERPContext(DbContextOptions<ERPContext> optionsBuilder) : base(optionsBuilder)
     {
         Database.EnsureCreated();
     }
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=erp;Username=postgres;Password=mysecretpassword");
+        modelBuilder.Entity<User>().HasData(
+                new User { Id = 1, Login = "admin", Password = "admin" }
+        );
     }
 }

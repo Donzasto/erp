@@ -1,5 +1,8 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
+[Index(nameof(Login), IsUnique = true)]
+[Index(nameof(Password), IsUnique = true)]
 [Table("users")]
 public class User
 {
