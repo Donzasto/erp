@@ -8,13 +8,55 @@
 
 <body>
     <h1>Index Page</h1>
-    <table>
-        <tr>
-            <td><a href="/product-composition">product-composition</a></td>
-            <td><a href="/manage-product-composition">manage-product-composition</a></td>
-            <td><a href="/admin-panel">admin-panel</a></td>
-    </table>
+    <a href="/product-composition">product-composition</a>
+    <a href="/manage-product-composition">manage-product-composition</a>
     <a href="/login">login</a>
+    <table>
+        <thead>
+            <tr>
+                <th>Login</th>
+                <th>Password</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <script>
+        async function getUsers() {
+
+            const response = await fetch("/api/users", {
+                method: "GET",
+                headers: { "Accept": "application/json" }
+            });
+
+            if (response.ok === true) {
+                const users = await response.json();
+                const rows = document.querySelector("tbody");
+
+                users.forEach(user => rows.append(row(user)));
+            }
+
+            function row(user) {
+
+                const tr = document.createElement("tr");
+                tr.setAttribute("data-rowid", user.id);
+
+                const nameTd = document.createElement("td");
+                nameTd.append(user.login);
+                tr.append(nameTd);
+
+                const ageTd = document.createElement("td");
+                ageTd.append(user.password);
+                tr.append(ageTd);
+
+                return tr;
+            }
+        }
+
+        getUsers();
+    </script>
 </body>
 
 </html>

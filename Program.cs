@@ -68,13 +68,9 @@ app.MapGet("/product-composition", () => "product-composition");
 
 app.MapGet("/manage-product-composition", [Authorize] () => "manage-product-composition");
 
-app.MapGet("/users", async (ERPContext eRPContext) => await eRPContext.Users.ToListAsync());
-
-app.MapGet("/admin-panel", [Authorize] async (HttpContext context) =>
+app.MapGet("/api/users", [Authorize] async (HttpContext context, ERPContext eRPContext) =>
 {
-    context.Response.ContentType = "text/html; charset=utf-8";
-
-    await context.Response.SendFileAsync("wwwroot/admin-panel.html");
+    await context.Response.WriteAsJsonAsync(eRPContext.Users);
 });
 
 app.Run();
