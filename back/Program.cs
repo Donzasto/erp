@@ -9,8 +9,16 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options => options.LoginPath = "/login");
 builder.Services.AddAuthorization();
 builder.Services.AddDbContext<ERPContext>(options => options.UseNpgsql("Host=localhost;Port=5432;Database=erp;Username=postgres;Password=mysecretpassword"));
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options => options.AddSecurityDefinition("Cookies", new Microsoft.OpenApi.Models.OpenApiSecurityScheme { }));
 
 var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -63,10 +71,6 @@ app.MapGet("/logout", async (HttpContext context) =>
 
     return Results.Redirect("/");
 });
-
-app.MapGet("/product-composition", () => "product-composition");
-
-app.MapGet("/manage-product-composition", [Authorize] () => "manage-product-composition");
 
 app.MapGet("/api/login", async (HttpContext context) =>
 {
