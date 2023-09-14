@@ -68,6 +68,45 @@ app.MapGet("/product-composition", () => "product-composition");
 
 app.MapGet("/manage-product-composition", [Authorize] () => "manage-product-composition");
 
+app.MapGet("/api/login", async (HttpContext context) =>
+{
+    var user = context.User.Identity;
+
+    if (user is not null && user.IsAuthenticated)
+    {
+        context.Response.Redirect("/");
+    }
+    else
+    {
+        context.Response.ContentType = "text/html; charset=utf-8";
+
+        await context.Response.SendFileAsync("wwwroot/login.html");
+    }
+});
+
+app.MapPost("/api/login", async (string? returnUrl, HttpContext context, ERPContext db) =>
+{
+    var form = context.Request.Form;
+
+    if (!form.ContainsKey("login") || !form.ContainsKey("password"))
+        return Results.BadRequest("Имя и/или пароль не  установлены");
+
+    string? name = form["login"];
+    string? password = form["password"];
+
+    var user = db.Users.FirstOrDefault(x => x.Login == name && x.Password == password);
+
+    if (user is null) return Results.Unauthorized();
+
+    var claims = new List<Claim> { new Claim(ClaimTypes.Name, user.Login) };
+
+    var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+
+    await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity));
+
+    return Results.Redirect(returnUrl ?? "/");
+});
+
 app.MapGet("/api/users", [Authorize] async (HttpContext context, ERPContext eRPContext) =>
 {
     await context.Response.WriteAsJsonAsync(eRPContext.Users);
