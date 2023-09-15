@@ -16,10 +16,8 @@
 	});
 </script>
 
-<h2>Admin panel</h2>
-
 {#each notes as note}
 	<p>
-		<b> {note.login}, {note.login} </b>
+		<b> {note.login}, {note.password} </b>
 	</p>
 {/each}
