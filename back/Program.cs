@@ -75,4 +75,31 @@ app.MapGet("/api/login", (HttpContext context) =>
     }
 });
 
+app.MapPost("/api/users", async (HttpContext context, ERPContext eRPContext) =>
+{
+    var form = context.Request.Form;
+    // if (!form.ContainsKey("login") || !form.ContainsKey("password"))
+    //     return Results.BadRequest("Имя и/или пароль не  установлены");
+
+    string? login = form["login"];
+    string? password = form["password"];
+
+    var user = new User() { Login = login, Password = password };
+
+    await eRPContext.Users.AddAsync(user);
+    await eRPContext.SaveChangesAsync();
+    return user;
+});
+
+app.MapDelete("/api/users/{id:int}", async (int id, ERPContext eRPContext) =>
+{
+    User? user = await eRPContext.Users.FirstOrDefaultAsync(u => u.Id == id);
+
+    if (user == null) return Results.NotFound(new { message = "User not found" });
+
+    eRPContext.Users.Remove(user);
+    await eRPContext.SaveChangesAsync();
+    return Results.Json(user);
+});
+
 app.Run();

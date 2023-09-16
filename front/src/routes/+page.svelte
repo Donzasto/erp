@@ -1,5 +1,5 @@
 <script lang="ts">
-	let isAuthenticated = true;
+	export let isAuthenticated = false;
 
 	async function checkAuthenticated() {
 		const respone = await fetch('/api/login');
@@ -25,5 +25,5 @@
 {#if isAuthenticated}
 	<a href="/api/logout">logout</a>
 {:else}
-	<a href="/api/login">login</a>
+	<a href="/login">login</a>
 {/if}
