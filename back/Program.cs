@@ -1,11 +1,11 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddControllers();
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options => options.LoginPath = "/login");
 builder.Services.AddAuthorization();
 builder.Services.AddDbContext<ERPContext>(options => options.UseNpgsql("Host=localhost;Port=5432;Database=erp;Username=postgres;Password=mysecretpassword"));
@@ -25,6 +25,8 @@ app.UseAuthorization();
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
+
+app.MapControllers();
 
 app.MapGet("/api/logout", async (HttpContext context) =>
 {
@@ -56,11 +58,6 @@ app.MapPost("/api/login", async (string? returnUrl, HttpContext context, ERPCont
     return Results.Redirect(returnUrl ?? "/");
 });
 
-app.MapGet("/api/users", [Authorize] async (HttpContext context, ERPContext eRPContext) =>
-{
-    await context.Response.WriteAsJsonAsync(eRPContext.Users);
-});
-
 app.MapGet("/api/login", (HttpContext context) =>
 {
     var user = context.User.Identity;
@@ -73,33 +70,6 @@ app.MapGet("/api/login", (HttpContext context) =>
     {
         return Results.Unauthorized();
     }
-});
-
-app.MapPost("/api/users", async (HttpContext context, ERPContext eRPContext) =>
-{
-    var form = context.Request.Form;
-    // if (!form.ContainsKey("login") || !form.ContainsKey("password"))
-    //     return Results.BadRequest("Имя и/или пароль не  установлены");
-
-    string? login = form["login"];
-    string? password = form["password"];
-
-    var user = new User() { Login = login, Password = password };
-
-    await eRPContext.Users.AddAsync(user);
-    await eRPContext.SaveChangesAsync();
-    return user;
-});
-
-app.MapDelete("/api/users/{id:int}", async (int id, ERPContext eRPContext) =>
-{
-    User? user = await eRPContext.Users.FirstOrDefaultAsync(u => u.Id == id);
-
-    if (user == null) return Results.NotFound(new { message = "User not found" });
-
-    eRPContext.Users.Remove(user);
-    await eRPContext.SaveChangesAsync();
-    return Results.Json(user);
 });
 
 app.Run();

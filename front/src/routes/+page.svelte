@@ -20,9 +20,8 @@
 
 <h2>Main page</h2>
 
-<a href="/admin-panel">admin-panel</a>
-
 {#if isAuthenticated}
+	<a href="/admin-panel">admin-panel</a>
 	<a href="/api/logout">logout</a>
 {:else}
 	<a href="/login">login</a>
