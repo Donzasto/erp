@@ -1,3 +1,6 @@
+<script lang="ts">
+</script>
+
 <title>Authentication</title>
 
 <h2>Login Form</h2>

@@ -5,61 +5,91 @@ using Microsoft.EntityFrameworkCore;
 [Route("api/[controller]")]
 [ApiController]
 [Authorize]
-public class UsersController : ControllerBase
+public class UsersController : ControllerBase, IDisposable
 {
-    private readonly ERPContext _eRPContext;
+    // private readonly ERPContext _eRPContext;
+    private UnitOfWork _unitOfWork = new();
+    private bool disposedValue;
+
     public UsersController(ERPContext eRPContext)
     {
-        _eRPContext = eRPContext;
+        // _eRPContext = eRPContext;
     }
 
     [HttpGet]
     public async Task<ActionResult<DbSet<User>>> GetAllUsers()
     {
-        return Ok(_eRPContext.Users);
+        return Ok(_unitOfWork.UsersRepository.GetAll());
+        // return Ok(_eRPContext.Users);
     }
 
     [HttpPost]
     public async Task<ActionResult<DbSet<User>>> AddUser(User userRequest)
     {
-        if (string.IsNullOrWhiteSpace(userRequest.Login) || string.IsNullOrWhiteSpace(userRequest.Password))
-            return BadRequest("Имя и/или пароль не  установлены");
+        // var user = new User() { Login = userRequest.Login, Password = userRequest.Password };
 
-        var user = new User() { Login = userRequest.Login, Password = userRequest.Password };
+        // await _eRPContext.Users.AddAsync(user);
+        // await _eRPContext.SaveChangesAsync();
 
-        await _eRPContext.Users.AddAsync(user);
-        await _eRPContext.SaveChangesAsync();
+        _unitOfWork.UsersRepository.Add(userRequest);
+        _unitOfWork.Save();
 
-        return Ok(_eRPContext.Users);
+        return Ok(_unitOfWork.UsersRepository.GetAll());
     }
 
     [HttpPut]
     public async Task<ActionResult<DbSet<User>>> UpdateUser(User userRequest)
     {
-        var user = await _eRPContext.Users.FindAsync(userRequest.Id);
+        // var users = _unitOfWork.UsersRepository.GetAll().AsNoTracking();
+        // var user = await users.FirstOrDefaultAsync(u => u.Id == userRequest.Id);
 
-        if (user == null)
-            return NotFound(new { message = "User not found" });
+        // if (user == null)
+        //     return NotFound(new { message = "User not found" });
 
-        user.Login = userRequest.Login;
-        user.Password = userRequest.Password;
+        // user.Login = userRequest.Login;
+        // // user.Password = userRequest.Password;
 
-        await _eRPContext.SaveChangesAsync();
 
-        return Ok(_eRPContext.Users);
+        _unitOfWork.UsersRepository.Update(userRequest);
+        _unitOfWork.Save();
+        // await _eRPContext.SaveChangesAsync();
+
+        return Ok(_unitOfWork.UsersRepository.GetAll());
     }
 
     [HttpDelete("{id}")]
     public async Task<ActionResult<DbSet<User>>> DeleteUser(int id)
     {
-        var user = await _eRPContext.Users.FindAsync(id);
+        var user = await _unitOfWork.UsersRepository.GetAll().FindAsync(id);
 
         if (user == null)
             return NotFound(new { message = "User not found" });
 
-        _eRPContext.Users.Remove(user);
-        await _eRPContext.SaveChangesAsync();
+        // _eRPContext.Users.Remove(user);
+        // await _eRPContext.SaveChangesAsync();
 
-        return Ok(_eRPContext.Users);
+        _unitOfWork.UsersRepository.Delete(user);
+        _unitOfWork.Save();
+
+        return Ok(_unitOfWork.UsersRepository.GetAll());
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposedValue)
+        {
+            if (disposing)
+            {
+                _unitOfWork.Dispose();
+            }
+
+            disposedValue = true;
+        }
+    }
+
+    void IDisposable.Dispose()
+    {
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
     }
 }
