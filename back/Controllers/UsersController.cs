@@ -11,10 +11,10 @@ public class UsersController : ControllerBase, IDisposable
     private UnitOfWork _unitOfWork = new();
     private bool disposedValue;
 
-    public UsersController(ERPContext eRPContext)
-    {
-        // _eRPContext = eRPContext;
-    }
+    // public UsersController(ERPContext eRPContext)
+    // {
+    // _eRPContext = eRPContext;
+    // }
 
     [HttpGet]
     public async Task<ActionResult<DbSet<User>>> GetAllUsers()

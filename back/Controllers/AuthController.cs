@@ -13,20 +13,11 @@ public class AuthController : ControllerBase
         _eRPContext = eRPContext;
     }
 
-    [Route("api/logout")]
-    [HttpGet]
-    public async Task<ActionResult<User>> GetLogout()
-    {
-        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-
-        return Redirect("/");
-    }
-
     [Route("api/login")]
     [HttpPost]
-    public async Task<ActionResult<User>> Login([FromFormAttribute] User userRequired)
+    public async Task<ActionResult<User>> Login()
     {
-        var form = HttpContext.Request.Form;
+        var form = Request.Form;
 
         if (!form.ContainsKey("login") || !form.ContainsKey("password"))
             return BadRequest("Имя и/или пароль не  установлены");
@@ -35,7 +26,7 @@ public class AuthController : ControllerBase
         string? password = form["password"];
 
         var dbSet = _eRPContext.Set<User>();
-        var user = dbSet.FirstOrDefault(x => x.Login == userRequired.Login && x.Password == userRequired.Password);
+        var user = dbSet.FirstOrDefault(x => x.Login == login && x.Password == password);
 
         if (user is null) return Unauthorized();
 
@@ -62,5 +53,14 @@ public class AuthController : ControllerBase
         {
             return Unauthorized();
         }
+    }
+
+    [Route("api/logout")]
+    [HttpGet]
+    public async Task<ActionResult<User>> GetLogout()
+    {
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+        return Redirect("/");
     }
 }
