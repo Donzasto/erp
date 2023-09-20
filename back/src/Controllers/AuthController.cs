@@ -30,7 +30,7 @@ public class AuthController : ControllerBase
 
         if (user is null) return Unauthorized();
 
-        var claims = new List<Claim> { new Claim(ClaimTypes.Name, "") };
+        var claims = new List<Claim> { new Claim(ClaimTypes.Name, user.Login) };
 
         var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
