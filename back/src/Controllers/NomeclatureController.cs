@@ -5,61 +5,65 @@ using Microsoft.EntityFrameworkCore;
 [Route("api/[controller]")]
 [ApiController]
 [Authorize]
-public class NomenclaturesController : ControllerBase
+public class NomenclaturesController : ControllerBase, IDisposable
 {
-    private readonly ERPContext _eRPContext;
-    public NomenclaturesController(ERPContext eRPContext)
+    private UnitOfWork _unitOfWork = new();
+    private bool disposedValue;
+
+    [HttpGet]
+    public async Task<ActionResult<DbSet<Nomenclature>>> GetAll()
     {
-        _eRPContext = eRPContext;
+        return Ok(_unitOfWork.NomenclatureRepository.GetAll());
     }
 
-    // [HttpGet]
-    // public async Task<ActionResult<DbSet<User>>> GetAllUsers()
-    // {
-    //     return Ok(_eRPContext.Users);
-    // }
+    [HttpPost]
+    public async Task<ActionResult<DbSet<Nomenclature>>> Add(Nomenclature nomenclature)
+    {
+        _unitOfWork.NomenclatureRepository.Add(nomenclature);
+        _unitOfWork.Save();
 
-    // [HttpPost]
-    // public async Task<ActionResult<DbSet<User>>> AddUser(User userRequest)
-    // {
-    //     if (string.IsNullOrWhiteSpace(userRequest.Login) || string.IsNullOrWhiteSpace(userRequest.Password))
-    //         return BadRequest("Имя и/или пароль не  установлены");
+        return Ok(_unitOfWork.NomenclatureRepository.GetAll());
+    }
 
-    //     var user = new User() { Login = userRequest.Login, Password = userRequest.Password };
+    [HttpPut]
+    public async Task<ActionResult<DbSet<Nomenclature>>> Update(Nomenclature nomenclature)
+    {
+        _unitOfWork.NomenclatureRepository.Update(nomenclature);
+        _unitOfWork.Save();
 
-    //     await _eRPContext.Users.AddAsync(user);
-    //     await _eRPContext.SaveChangesAsync();
+        return Ok(_unitOfWork.NomenclatureRepository.GetAll());
+    }
 
-    //     return Ok(_eRPContext.Users);
-    // }
+    [HttpDelete("{id}")]
+    public async Task<ActionResult<DbSet<Nomenclature>>> Delete(int id)
+    {
+        var user = await _unitOfWork.NomenclatureRepository.GetAll().FindAsync(id);
 
-    // [HttpPut]
-    // public async Task<ActionResult<DbSet<User>>> UpdateUser(User userRequest)
-    // {
-    //     var user = await _eRPContext.Users.FindAsync(userRequest.Id);
+        if (user == null)
+            return NotFound(new { message = "User not found" });
 
-    //     if (user == null)
-    //         return NotFound(new { message = "User not found" });
+        _unitOfWork.NomenclatureRepository.Delete(user);
+        _unitOfWork.Save();
 
-    //     user.Login = userRequest.Login;
-    //     user.Password = userRequest.Password;
+        return Ok(_unitOfWork.NomenclatureRepository.GetAll());
+    }
 
-    //     await _eRPContext.SaveChangesAsync();
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposedValue)
+        {
+            if (disposing)
+            {
+                _unitOfWork.Dispose();
+            }
 
-    //     return Ok(_eRPContext.Users);
-    // }
+            disposedValue = true;
+        }
+    }
 
-    // [HttpDelete("{id}")]
-    // public async Task<ActionResult<DbSet<User>>> DeleteUser(int id)
-    // {
-    //     var user = await _eRPContext.Users.FindAsync(id);
-
-    //     if (user == null)
-    //         return NotFound(new { message = "User not found" });
-
-    //     _eRPContext.Users.Remove(user);
-    //     await _eRPContext.SaveChangesAsync();
-
-    //     return Ok(_eRPContext.Users);
-    // }
+    void IDisposable.Dispose()
+    {
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
 }

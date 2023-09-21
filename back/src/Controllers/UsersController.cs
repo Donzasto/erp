@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 [Route("api/[controller]")]
 [ApiController]
-[Authorize]
+[Authorize(Policy = "AdminAccess")]
 public class UsersController : ControllerBase, IDisposable
 {
     // private readonly ERPContext _eRPContext;
