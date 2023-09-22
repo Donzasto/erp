@@ -30,5 +30,29 @@ public class ERPContext : DbContext
                 new Nomenclature { Id = 9, Name = "Mouse", Code = "A.123" },
                 new Nomenclature { Id = 10, Name = "Cooler", Code = "A.459" }
         );
+
+        modelBuilder.Entity<NomenclatureRelations>().HasData(
+                new NomenclatureRelations { Id = 1, IdParrent = 6, IdChild = 1 },
+                new NomenclatureRelations { Id = 2, IdParrent = 1, IdChild = 2 },
+                new NomenclatureRelations { Id = 3, IdParrent = 1, IdChild = 3 },
+                new NomenclatureRelations { Id = 4, IdParrent = 1, IdChild = 4 },
+                new NomenclatureRelations { Id = 5, IdParrent = 1, IdChild = 5 },
+                new NomenclatureRelations { Id = 6, IdParrent = 6, IdChild = 7 },
+                new NomenclatureRelations { Id = 7, IdParrent = 6, IdChild = 8 },
+                new NomenclatureRelations { Id = 8, IdParrent = 6, IdChild = 9 },
+                new NomenclatureRelations { Id = 9, IdParrent = 6, IdChild = 10 }
+        );
+
+        modelBuilder.Entity<Nomenclature>()
+            .HasMany(e => e.IdParrents)
+            .WithOne(e => e.NomenclatureParrents)
+            .HasForeignKey(e => e.IdParrent)
+            .IsRequired();
+
+        modelBuilder.Entity<Nomenclature>()
+            .HasMany(e => e.IdChilds)
+            .WithOne(e => e.NomenclatureChilds)
+            .HasForeignKey(e => e.IdChild)
+            .IsRequired();
     }
 }

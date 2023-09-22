@@ -1,12 +1,14 @@
 using System.ComponentModel.DataAnnotations.Schema;
 
-[Table("product")]
+[Table("products")]
 public class Product
 {
     [Column("id")]
     public int Id { get; set; }
-    [Column("code")]
-    public string? Code { get; set; }
-    [Column("name")]
-    public string? Name { get; set; }
+
+    [Column("id_nomenclature")]
+    public int IdNomenclature { get; set; }
+
+    [Column("count")]
+    public double Count { get; set; }
 }
