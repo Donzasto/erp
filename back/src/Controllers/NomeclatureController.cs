@@ -1,102 +1,62 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 [Route("api/[controller]")]
 [ApiController]
-public class NomenclaturesController : ControllerBase, IDisposable
+public class NomenclatureController : ControllerBase
 {
-    private UnitOfWork _unitOfWork = new();
-    private bool disposedValue;
+    private GenericRepository1<Nomenclature> _genericRepository;
+
+    public NomenclatureController()
+    {
+        _genericRepository = new GenericRepository1<Nomenclature>();
+    }
 
     [HttpGet]
     public async Task<ActionResult<DbSet<Nomenclature>>> GetAll()
     {
-        return Ok(_unitOfWork.NomenclatureRepository.GetAll());
+        return Ok(await _genericRepository.GetAll());
     }
 
     [HttpPost]
     public async Task<ActionResult<DbSet<Nomenclature>>> Add(Nomenclature nomenclature)
     {
-        _unitOfWork.NomenclatureRepository.Add(nomenclature);
-        _unitOfWork.Save();
+        await _genericRepository.Add(nomenclature);
 
-        return Ok(_unitOfWork.NomenclatureRepository.GetAll());
+        return Ok(await _genericRepository.GetAll());
     }
 
     [HttpPut]
     public async Task<ActionResult<DbSet<Nomenclature>>> Update(Nomenclature nomenclature)
     {
-        _unitOfWork.NomenclatureRepository.Update(nomenclature);
-        _unitOfWork.Save();
+        await _genericRepository.Update(nomenclature);
 
-        return Ok(_unitOfWork.NomenclatureRepository.GetAll());
+        return Ok(await _genericRepository.GetAll());
     }
 
-    [HttpDelete("{id}")]
-    public async Task<ActionResult<DbSet<Nomenclature>>> Delete(int id)
+    [HttpDelete]
+    public async Task<ActionResult<DbSet<Nomenclature>>> Delete(Nomenclature entity)
     {
-        var entity = await _unitOfWork.NomenclatureRepository.GetAll().FindAsync(id);
+        await _genericRepository.Delete(entity);
 
-        if (entity == null)
-            return NotFound(new { message = "Nomenclature not found" });
-
-        _unitOfWork.NomenclatureRepository.Delete(entity);
-        _unitOfWork.Save();
-
-        return Ok(_unitOfWork.NomenclatureRepository.GetAll());
+        return Ok(await _genericRepository.GetAll());
     }
 
-    // public async Task<IActionResult> GetTree()
-    // {
-
-    //     return Ok();
-    // }
-
-    /*
-    WITH RECURSIVE nomenclaturea AS (
-    SELECT id_parrent, id_child 
-    FROM nomenclature_relations
-    WHERE id=1
-    UNION SELECT nr.id_parrent, nr.id_child
-      SELECT FROM nomenclature_relations AS nr
-      INNER JOIN nomenclaturea n on n.id_child = nr.id_parrent
-    ) SELECT 	* FROM nomenclaturea*/
     [HttpGet("id")]
-    public async Task<IActionResult> GetNomenclatureRelations(int id)
+    public async Task<ActionResult<DbSet<NomenclatureRelations>>> GetNomenclatureRelations(int id)
     {
         var context = new ERPContext();
         DbSet<NomenclatureRelations> nr = context.Set<NomenclatureRelations>();
 
-        var aa = nr.FromSql($@"WITH RECURSIVE nomenclaturea AS (
-        SELECT ss.id, ss.id_parrent, ss.id_child 
-        FROM nomenclature_relations ss
-        WHERE id_parrent = {id}
-        UNION SELECT nr.id, nr.id_parrent, nr.id_child
-          SELECT FROM nomenclature_relations AS nr
-          INNER JOIN nomenclaturea n on n.id_child = nr.id_parrent
-        ) SELECT  * FROM nomenclaturea").ToListAsync();
+        var aa = await nr.FromSql($@"WITH RECURSIVE nomenclaturea AS (
+            SELECT id, parrent_id, child_id 
+            FROM nomenclature_relations ss
+            WHERE ss.parrent_id={id}
+            UNION SELECT nr.id, nr.parrent_id, nr.child_id
+            SELECT FROM nomenclature_relations AS nr
+            INNER JOIN nomenclaturea n on n.child_id = nr.parrent_id
+            ) SELECT * FROM nomenclaturea").AsNoTrackingWithIdentityResolution().ToListAsync();
 
         return Ok(aa);
-    }
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!disposedValue)
-        {
-            if (disposing)
-            {
-                _unitOfWork.Dispose();
-            }
-
-            disposedValue = true;
-        }
-    }
-
-    void IDisposable.Dispose()
-    {
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
     }
 }

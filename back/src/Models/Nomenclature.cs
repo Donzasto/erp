@@ -14,6 +14,6 @@ public class Nomenclature
     [Column("code")]
     public string Code { get; set; } = null!;
 
-    public List<NomenclatureRelations> IdParrents { get; } = new();
-    public List<NomenclatureRelations> IdChilds { get; } = new();
+    public List<NomenclatureRelations> ParrentsId { get; } = new();
+    public List<NomenclatureRelations> ChildsId { get; } = new();
 }

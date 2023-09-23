@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 public class ERPContext : DbContext
 {
+    public DbSet<Nomenclature> nomenclatures;
     public ERPContext() : base()
     {
         Database.EnsureCreated();
@@ -32,27 +33,27 @@ public class ERPContext : DbContext
         );
 
         modelBuilder.Entity<NomenclatureRelations>().HasData(
-                new NomenclatureRelations { Id = 1, IdParrent = 6, IdChild = 1 },
-                new NomenclatureRelations { Id = 2, IdParrent = 1, IdChild = 2 },
-                new NomenclatureRelations { Id = 3, IdParrent = 1, IdChild = 3 },
-                new NomenclatureRelations { Id = 4, IdParrent = 1, IdChild = 4 },
-                new NomenclatureRelations { Id = 5, IdParrent = 1, IdChild = 5 },
-                new NomenclatureRelations { Id = 6, IdParrent = 6, IdChild = 7 },
-                new NomenclatureRelations { Id = 7, IdParrent = 6, IdChild = 8 },
-                new NomenclatureRelations { Id = 8, IdParrent = 6, IdChild = 9 },
-                new NomenclatureRelations { Id = 9, IdParrent = 6, IdChild = 10 }
+                new NomenclatureRelations { Id = 1, ParrentId = 6, ChildId = 1 },
+                new NomenclatureRelations { Id = 2, ParrentId = 1, ChildId = 2 },
+                new NomenclatureRelations { Id = 3, ParrentId = 1, ChildId = 3 },
+                new NomenclatureRelations { Id = 4, ParrentId = 1, ChildId = 4 },
+                new NomenclatureRelations { Id = 5, ParrentId = 1, ChildId = 5 },
+                new NomenclatureRelations { Id = 6, ParrentId = 6, ChildId = 7 },
+                new NomenclatureRelations { Id = 7, ParrentId = 6, ChildId = 8 },
+                new NomenclatureRelations { Id = 8, ParrentId = 6, ChildId = 9 },
+                new NomenclatureRelations { Id = 9, ParrentId = 6, ChildId = 10 }
         );
 
         modelBuilder.Entity<Nomenclature>()
-            .HasMany(e => e.IdParrents)
+            .HasMany(e => e.ParrentsId)
             .WithOne(e => e.NomenclatureParrents)
-            .HasForeignKey(e => e.IdParrent)
+            .HasForeignKey(e => e.ParrentId)
             .IsRequired();
 
         modelBuilder.Entity<Nomenclature>()
-            .HasMany(e => e.IdChilds)
+            .HasMany(e => e.ChildsId)
             .WithOne(e => e.NomenclatureChilds)
-            .HasForeignKey(e => e.IdChild)
+            .HasForeignKey(e => e.ChildId)
             .IsRequired();
     }
 }

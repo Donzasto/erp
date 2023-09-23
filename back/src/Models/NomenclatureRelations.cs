@@ -6,11 +6,11 @@ public class NomenclatureRelations
     [Column("id")]
     public int Id { get; set; }
 
-    [Column("id_parrent")]
-    public int IdParrent { get; set; }
+    [Column("parrent_id")]
+    public int ParrentId { get; set; }
 
-    [Column("id_child")]
-    public int IdChild { get; set; }
+    [Column("child_id")]
+    public int ChildId { get; set; }
 
     public Nomenclature NomenclatureParrents { get; set; } = null!;
     public Nomenclature NomenclatureChilds { get; set; } = null!;
