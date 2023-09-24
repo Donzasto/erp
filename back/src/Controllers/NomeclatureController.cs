@@ -5,58 +5,92 @@ using Microsoft.EntityFrameworkCore;
 [ApiController]
 public class NomenclatureController : ControllerBase
 {
-    private GenericRepository1<Nomenclature> _genericRepository;
+    private readonly ERPContext _eRPContext;
 
-    public NomenclatureController()
+    public NomenclatureController(ERPContext eRPContext)
     {
-        _genericRepository = new GenericRepository1<Nomenclature>();
+        _eRPContext = eRPContext;
     }
 
     [HttpGet]
-    public async Task<ActionResult<DbSet<Nomenclature>>> GetAll()
+    public async Task<ActionResult<List<Nomenclature>>> GetAll()
     {
-        return Ok(await _genericRepository.GetAll());
+        return await _eRPContext.Nomenclatures.AsNoTracking().ToListAsync();
     }
 
     [HttpPost]
-    public async Task<ActionResult<DbSet<Nomenclature>>> Add(Nomenclature nomenclature)
+    public async Task<ActionResult<DbSet<Nomenclature>>> Create(Nomenclature nomenclature)
     {
-        await _genericRepository.Add(nomenclature);
+        try
+        {
+            _eRPContext.Add(nomenclature);
+            await _eRPContext.SaveChangesAsync();
 
-        return Ok(await _genericRepository.GetAll());
+            return Ok();
+        }
+        catch (DbUpdateException)
+        {
+            return BadRequest();
+        }
     }
 
     [HttpPut]
-    public async Task<ActionResult<DbSet<Nomenclature>>> Update(Nomenclature nomenclature)
+    public async Task<ActionResult<DbSet<Nomenclature>>> Update(Nomenclature entity)
     {
-        await _genericRepository.Update(nomenclature);
+        _eRPContext.Entry(entity).State = EntityState.Modified;
 
-        return Ok(await _genericRepository.GetAll());
+        try
+        {
+            await _eRPContext.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            return BadRequest();
+        }
+
+        return Ok();
     }
 
     [HttpDelete]
-    public async Task<ActionResult<DbSet<Nomenclature>>> Delete(Nomenclature entity)
+    public async Task<ActionResult<DbSet<Nomenclature>>> Delete(int? id)
     {
-        await _genericRepository.Delete(entity);
+        if (id == null)
+        {
+            return NotFound();
+        }
 
-        return Ok(await _genericRepository.GetAll());
+        var nomenclature = await _eRPContext.Nomenclatures.
+            AsNoTracking().
+            FirstOrDefaultAsync(n => n.Id == id);
+
+        if (nomenclature == null)
+        {
+            return NotFound();
+        }
+
+        _eRPContext.Nomenclatures.Remove(nomenclature);
+        await _eRPContext.SaveChangesAsync();
+
+        return Ok();
     }
 
-    [HttpGet("id")]
-    public async Task<ActionResult<DbSet<NomenclatureRelations>>> GetNomenclatureRelations(int id)
+    [HttpGet("rootNodeId")]
+    public async Task<ActionResult<DbSet<NomenclatureRelations>>> GetProductTreeNodesIds(int rootNodeId)
     {
         var context = new ERPContext();
-        DbSet<NomenclatureRelations> nr = context.Set<NomenclatureRelations>();
 
-        var aa = await nr.FromSql($@"WITH RECURSIVE nomenclaturea AS (
+        DbSet<NomenclatureRelations> DbSetNomenclatureRelations = context.Set<NomenclatureRelations>();
+
+        var nodesIds = await DbSetNomenclatureRelations.FromSql(
+            $@"WITH RECURSIVE entity AS (
             SELECT id, parrent_id, child_id 
-            FROM nomenclature_relations ss
-            WHERE ss.parrent_id={id}
+            FROM nomenclature_relations 
+            WHERE parrent_id={rootNodeId}
             UNION SELECT nr.id, nr.parrent_id, nr.child_id
             SELECT FROM nomenclature_relations AS nr
-            INNER JOIN nomenclaturea n on n.child_id = nr.parrent_id
-            ) SELECT * FROM nomenclaturea").AsNoTrackingWithIdentityResolution().ToListAsync();
+            INNER JOIN entity e on e.child_id = nr.parrent_id
+            ) SELECT * FROM entity").AsNoTrackingWithIdentityResolution().ToListAsync();
 
-        return Ok(aa);
+        return Ok(nodesIds);
     }
 }

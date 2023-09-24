@@ -7,14 +7,14 @@ using Microsoft.EntityFrameworkCore;
 [Authorize(Policy = "AdminAccess")]
 public class UsersController : ControllerBase, IDisposable
 {
-    // private readonly ERPContext _eRPContext;
+    private readonly ERPContext _eRPContext;
     private UnitOfWork _unitOfWork = new();
     private bool disposedValue;
 
-    // public UsersController(ERPContext eRPContext)
-    // {
-    // _eRPContext = eRPContext;
-    // }
+    public UsersController(ERPContext eRPContext)
+    {
+        _eRPContext = eRPContext;
+    }
 
     [HttpGet]
     public async Task<ActionResult<DbSet<User>>> GetAllUsers()
@@ -38,8 +38,36 @@ public class UsersController : ControllerBase, IDisposable
     }
 
     [HttpPut]
-    public async Task<ActionResult<DbSet<User>>> UpdateUser(User userRequest)
+    public async Task<ActionResult<DbSet<User>>> UpdateUser(int? id, User user)
     {
+        if (id != user.Id)
+        {
+            return BadRequest();
+        }
+
+        var todoItem = await _eRPContext.Users.FindAsync(id);
+        if (todoItem == null)
+        {
+            return NotFound();
+        }
+
+        todoItem.Login = user.Login;
+        todoItem.Password = user.Password;
+
+        try
+        {
+            await _eRPContext.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException) when (!_eRPContext.Users.Any(e => e.Id == id))
+        {
+            return NotFound();
+        }
+
+        return NoContent();
+
+        // var nomenclatures = await _genericRepository.Update(nomenclature);
+
+        // return Ok(nomenclatureToUpdate);
         // var users = _unitOfWork.UsersRepository.GetAll().AsNoTracking();
         // var user = await users.FirstOrDefaultAsync(u => u.Id == userRequest.Id);
 
@@ -50,7 +78,7 @@ public class UsersController : ControllerBase, IDisposable
         // // user.Password = userRequest.Password;
 
 
-        _unitOfWork.UsersRepository.Update(userRequest);
+        // _unitOfWork.UsersRepository.Update(userRequest);
         _unitOfWork.Save();
         // await _eRPContext.SaveChangesAsync();
 

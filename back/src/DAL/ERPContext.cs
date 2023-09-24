@@ -1,8 +1,11 @@
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 
-public class ERPContext : DbContext
+public sealed class ERPContext : DbContext
 {
-    public DbSet<Nomenclature> nomenclatures;
+    public DbSet<Nomenclature> Nomenclatures { get; set; }
+    public DbSet<User> Users { get; set; }
+    // public DbSet<Nomenclature> nomenclatures;
     public ERPContext() : base()
     {
         Database.EnsureCreated();
@@ -11,6 +14,7 @@ public class ERPContext : DbContext
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=erp;Username=postgres;Password=mysecretpassword");
+        optionsBuilder.LogTo(Console.WriteLine);
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
