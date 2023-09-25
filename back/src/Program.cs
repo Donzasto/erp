@@ -20,6 +20,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UserCustomExeptionHandler();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
