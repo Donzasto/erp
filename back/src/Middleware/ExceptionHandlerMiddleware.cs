@@ -1,34 +1,33 @@
-internal class ExceptionHandlerMiddleware
-{
-    private readonly RequestDelegate _next;
+using System.Text.Json;
+using Microsoft.AspNetCore.Mvc;
 
-    public ExceptionHandlerMiddleware(RequestDelegate next)
+internal class ExceptionHandlerMiddleware : IMiddleware
+{
+    private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
-        _next = next;
+        context.Response.StatusCode = StatusCodes.Status400BadRequest;
+        context.Response.ContentType = "application/json";
+
+        var problem = new ProblemDetails()
+        {
+            Title = "Bad request",
+            Status = StatusCodes.Status400BadRequest,
+        };
+
+        var json = JsonSerializer.Serialize(problem);
+
+        await context.Response.WriteAsync(json);
     }
 
-    public async Task Invoke(HttpContext httpContext)
+    public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
         try
         {
-            await _next(httpContext);
+            await next(context);
         }
         catch (Exception ex)
         {
-            await HandleExceptionAsync(httpContext, ex);
+            await HandleExceptionAsync(context, ex);
         }
     }
-
-    private static async Task HandleExceptionAsync(HttpContext httpContext, Exception exception)
-    {
-        httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
-
-        await httpContext.Response.WriteAsync("An exception was thrown.");
-    }
-}
-
-internal static class ExceptionHandlerMiddlewareExtensions
-{
-    internal static IApplicationBuilder UserCustomExeptionHandler(this IApplicationBuilder applicationBuilder)
-        => applicationBuilder.UseMiddleware<ExceptionHandlerMiddleware>();
 }

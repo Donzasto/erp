@@ -1,5 +1,7 @@
+using System.Reflection;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,7 +12,19 @@ builder.Services.AddAuthorization(options => options.
     AddPolicy("AdminAccess", policy => policy.RequireClaim(ClaimTypes.Name, "admin")));
 builder.Services.AddDbContext<ERPContext>();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Version = "v1",
+        Title = "ERP API",
+        Description = "backend application for ERP"
+    });
+    var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+});
+
+builder.Services.AddTransient<ExceptionHandlerMiddleware>();
 
 var app = builder.Build();
 
@@ -20,7 +34,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UserCustomExeptionHandler();
+app.UseMiddleware<ExceptionHandlerMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -32,4 +46,7 @@ app.MapControllers();
 
 app.Run();
 
+/// <summary>
+/// For tests.
+/// </summary>
 public partial class Program { }
