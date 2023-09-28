@@ -5,119 +5,82 @@ using Microsoft.EntityFrameworkCore;
 [Route("api/[controller]")]
 [ApiController]
 [Authorize(Policy = "AdminAccess")]
-public class UsersController : ControllerBase, IDisposable
+public class UsersController : ControllerBase
 {
     private readonly ERPContext _eRPContext;
-    private UnitOfWork _unitOfWork = new();
-    private bool disposedValue;
 
     public UsersController(ERPContext eRPContext)
     {
         _eRPContext = eRPContext;
     }
 
+    /// <summary>
+    /// Get list of all users.
+    /// </summary>
+    /// <returns>List of all users</returns>
     [HttpGet]
-    public async Task<ActionResult<DbSet<User>>> GetAllUsers()
+    public async Task<ActionResult<List<User>>> GetAll()
     {
-        return Ok(_unitOfWork.UsersRepository.GetAll());
-        // return Ok(_eRPContext.Users);
+        return Ok(await _eRPContext.Users.AsNoTracking().ToListAsync());
     }
 
+    /// <summary>
+    /// Create a nomeclature.
+    /// </summary>
+    /// <param name="entity"></param>
+    /// <returns></returns>
     [HttpPost]
-    public async Task<ActionResult<DbSet<User>>> AddUser(User userRequest)
+    public async Task<ActionResult> Create(User entity)
     {
-        // var user = new User() { Login = userRequest.Login, Password = userRequest.Password };
+        _eRPContext.Add(entity);
+        await _eRPContext.SaveChangesAsync();
 
-        // await _eRPContext.Users.AddAsync(user);
-        // await _eRPContext.SaveChangesAsync();
-
-        _unitOfWork.UsersRepository.Add(userRequest);
-        _unitOfWork.Save();
-
-        return Ok(_unitOfWork.UsersRepository.GetAll());
+        return Ok();
     }
 
+    /// <summary>
+    /// Update a specific user.
+    /// </summary>
+    /// <param name="entity"></param>
+    /// <returns></returns>
     [HttpPut]
-    public async Task<ActionResult<DbSet<User>>> UpdateUser(int? id, User user)
+    public async Task<ActionResult> Update(User entity)
     {
-        if (id != user.Id)
-        {
-            return BadRequest();
-        }
+        _eRPContext.Entry(entity).State = EntityState.Modified;
 
-        var todoItem = await _eRPContext.Users.FindAsync(id);
-        if (todoItem == null)
+        await _eRPContext.SaveChangesAsync();
+
+        return Ok();
+    }
+
+    /// <summary>
+    /// Delete a specific user.
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
+    /// <response code="404">id or user not found</response>
+    [HttpDelete]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> Delete(int? id)
+    {
+        if (id == null)
         {
             return NotFound();
         }
 
-        todoItem.Login = user.Login;
-        todoItem.Password = user.Password;
+        var entity = await _eRPContext.Users.
+            AsNoTracking().
+            FirstOrDefaultAsync(n => n.Id == id);
 
-        try
-        {
-            await _eRPContext.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException) when (!_eRPContext.Users.Any(e => e.Id == id))
+        if (entity == null)
         {
             return NotFound();
         }
 
-        return NoContent();
+        _eRPContext.Users.Remove(entity);
 
-        // var nomenclatures = await _genericRepository.Update(nomenclature);
+        await _eRPContext.SaveChangesAsync();
 
-        // return Ok(nomenclatureToUpdate);
-        // var users = _unitOfWork.UsersRepository.GetAll().AsNoTracking();
-        // var user = await users.FirstOrDefaultAsync(u => u.Id == userRequest.Id);
-
-        // if (user == null)
-        //     return NotFound(new { message = "User not found" });
-
-        // user.Login = userRequest.Login;
-        // // user.Password = userRequest.Password;
-
-
-        // _unitOfWork.UsersRepository.Update(userRequest);
-        _unitOfWork.Save();
-        // await _eRPContext.SaveChangesAsync();
-
-        return Ok(_unitOfWork.UsersRepository.GetAll());
-    }
-
-    [HttpDelete("{id}")]
-    public async Task<ActionResult<DbSet<User>>> DeleteUser(int id)
-    {
-        var user = await _unitOfWork.UsersRepository.GetAll().FindAsync(id);
-
-        if (user == null)
-            return NotFound(new { message = "User not found" });
-
-        // _eRPContext.Users.Remove(user);
-        // await _eRPContext.SaveChangesAsync();
-
-        _unitOfWork.UsersRepository.Delete(user);
-        _unitOfWork.Save();
-
-        return Ok(_unitOfWork.UsersRepository.GetAll());
-    }
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!disposedValue)
-        {
-            if (disposing)
-            {
-                _unitOfWork.Dispose();
-            }
-
-            disposedValue = true;
-        }
-    }
-
-    void IDisposable.Dispose()
-    {
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
+        return Ok();
     }
 }
